@@ -34,7 +34,7 @@ python, opencv, opencv-5, numpy, aws, aws-lambda, aws-graviton, amazon-bedrock, 
 
 Most automated visual inspection is one-shot: take one photo, run one fixed pipeline, output pass or fail. On a real line, that one photo is often the problem. A part arrives slightly rotated, the lens drifts out of focus, the lighting changes, or a reflection hides the surface. One-shot systems then either let defects escape or reject good parts, and people stop trusting them.
 
-A human inspector does something different. When the view is bad, they adjust the light and look again. When something looks odd, they lean in for a closer look. When the problem is serious, they call a supervisor before stopping production. We wanted a system that behaves that way, with OpenCV 5 measurements deciding each next step.
+A human inspector does something different. When the view is bad, they adjust the light and look again. When something looks odd, they lean in for a closer look. When the problem is serious, they call a supervisor before stopping production. I wanted to build a system that behaves that way, with OpenCV 5 measurements deciding each next step.
 
 ## What it does
 
@@ -49,7 +49,7 @@ InspectAgent runs a perception, decision and action loop for every part:
 
 The planner that chooses each tool call is either a deterministic rule policy or **Claude on Amazon Bedrock**, which receives the OpenCV measurements (and the close-up image) and picks the next tool. Both go through the same executor, which enforces guardrails. A part cannot pass without a defect check on a good image. A critical defect cannot be auto-rejected without a human. Captures and steps have budgets. Planner errors fall back to the rule policy. Every step is logged with the OpenCV evidence behind it.
 
-## How we built it
+## How I built it
 
 - **OpenCV 5.0** (`opencv-python-headless==5.0.0.93`) for all image analysis.
 - **AWS Lambda on Graviton (arm64)**, packaged as a container and served through a Function URL with FastAPI and Mangum.
@@ -80,14 +80,14 @@ On 200 synthetic parts (seed 11), compared with a static one-shot OpenCV pipelin
 
 Under glare the baseline was right 50% of the time and the agent 100%. Under blur the baseline was right 50% of the time and the agent 97.5%.
 
-## Challenges we ran into
+## Challenges I ran into
 
-- **False defects along part edges.** A full homography extrapolated badly at the plate edges and produced fake "scratches". Switching to a 4-DoF similarity fit with ECC refinement, a validity mask for out-of-frame pixels and a min/max-envelope residual brought false rejects to zero.
-- **Dark images looked blurry.** Underexposure lowers the Laplacian variance, so the agent kept refocusing an image that only needed more exposure. We now fix exposure first, then glare, then focus, and escalate instead of retrying a remedy that already failed.
-- **Faint defects.** Low-contrast spots fell just below the production threshold. Lowering the threshold everywhere would add false alarms, so the agent takes a targeted close-up only when the residual is near the threshold.
-- **Keeping an LLM planner safe.** We kept the guardrails in the executor, not in the prompt, so they hold whichever planner is driving.
+- **False defects along part edges.** A full homography extrapolated badly at the plate edges and produced fake "scratches". I switched to a 4-DoF similarity fit with ECC refinement, a validity mask for out-of-frame pixels and a min/max-envelope residual. That brought false rejects to zero.
+- **Dark images looked blurry.** Underexposure lowers the Laplacian variance, so the agent kept refocusing an image that only needed more exposure. The agent now fixes exposure first, then glare, then focus, and escalate instead of retrying a remedy that already failed.
+- **Faint defects.** Low-contrast spots fell just below the production threshold. Lowering the threshold everywhere would add false alarms, so I made the agent take a targeted close-up only when the residual is near the threshold.
+- **Keeping an LLM planner safe.** I put the guardrails in the executor, not in the prompt, so they hold whichever planner is driving.
 
-## What we learned
+## What I learned
 
 The biggest gains did not come from a better detector. They came from letting the system notice a bad observation and take a better one. Measuring image quality explicitly, and making each action depend on that measurement, turned a brittle pipeline into one that recovers on its own and knows when to ask a person.
 
@@ -101,4 +101,4 @@ The biggest gains did not come from a better detector. They came from letting th
 
 ## What's next
 
-Evaluation on real defect images, more part types, a real camera driver behind the same interface, and a measured comparison of the OpenCV workload on Graviton with and without COOL.
+My next steps are evaluation on real defect images, more part types, a real camera driver behind the same interface, and a measured comparison of the OpenCV workload on Graviton with and without COOL.
