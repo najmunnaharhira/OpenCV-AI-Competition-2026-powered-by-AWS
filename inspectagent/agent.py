@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import base64
 import json
+import logging
 import os
 import time
 import uuid
@@ -24,6 +25,8 @@ import numpy as np
 
 from . import vision
 from .camera import Part, SimCamera
+
+log = logging.getLogger("inspectagent")
 
 MAX_STEPS = 12
 MAX_CAPTURES = 4
@@ -317,12 +320,16 @@ def run(part: Part, camera: SimCamera | None = None, planner=None) -> Session:
         s.trace.append({"step": step, "planner": active.name, "tool": tool, "args": args,
                         "why": why, "result": _summarise(result),
                         "plan_ms": round(plan_ms, 1), "tool_ms": round((time.perf_counter() - t1) * 1000, 1)})
+        # One JSON line per step: CloudWatch Logs Insights can filter by session, tool or planner.
+        log.info(json.dumps({"session_id": s.session_id, "part_id": part.part_id, **s.trace[-1]}, default=str))
         last = result
         if s.outcome:
             break
     if not s.outcome:
         s.outcome = {"decision": "human_review", "status": "pending", "proposed_action": "manual_inspection",
                      "rationale": f"step budget ({MAX_STEPS}) exhausted"}
+    log.info(json.dumps({"session_id": s.session_id, "part_id": part.part_id, "outcome": s.outcome,
+                         "steps": len(s.trace), "captures": s.captures}, default=str))
     return s
 
 

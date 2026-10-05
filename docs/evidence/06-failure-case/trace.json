@@ -1,0 +1,147 @@
+{
+  "part_id": "P199",
+  "ground_truth": [
+    {
+      "kind": "faint_spot",
+      "x": 173,
+      "y": 377
+    }
+  ],
+  "outcome": {
+    "decision": "pass",
+    "rationale": "close-up found nothing"
+  },
+  "trace": [
+    {
+      "step": 1,
+      "planner": "rules",
+      "tool": "capture_image",
+      "args": {
+        "refocus": false,
+        "exposure": 1.0,
+        "polarizer": false
+      },
+      "why": "start with default camera settings",
+      "result": {
+        "settings": {
+          "refocus": false,
+          "exposure": 1.0,
+          "polarizer": false
+        },
+        "quality": {
+          "sharpness": 434.4,
+          "mean_intensity": 193.3,
+          "glare_fraction": 0.6373,
+          "issues": [
+            "overexposed",
+            "glare"
+          ],
+          "ok": false
+        },
+        "captures_left": 3
+      },
+      "plan_ms": 0.0,
+      "tool_ms": 28.5
+    },
+    {
+      "step": 2,
+      "planner": "rules",
+      "tool": "capture_image",
+      "args": {
+        "refocus": false,
+        "exposure": 0.662,
+        "polarizer": false
+      },
+      "why": "overexposed: mean intensity 193.3 -> scale exposure",
+      "result": {
+        "settings": {
+          "refocus": false,
+          "exposure": 0.662,
+          "polarizer": false
+        },
+        "quality": {
+          "sharpness": 272.4,
+          "mean_intensity": 136.4,
+          "glare_fraction": 0.0,
+          "issues": [],
+          "ok": true
+        },
+        "captures_left": 2
+      },
+      "plan_ms": 0.0,
+      "tool_ms": 27.8
+    },
+    {
+      "step": 3,
+      "planner": "rules",
+      "tool": "align_to_reference",
+      "args": {},
+      "why": "image quality ok -> register to reference",
+      "result": {
+        "ok": true,
+        "inliers": 415,
+        "ecc": 0.9999,
+        "rotation_deg": -1.64,
+        "coverage": 0.943
+      },
+      "plan_ms": 0.0,
+      "tool_ms": 63.9
+    },
+    {
+      "step": 4,
+      "planner": "rules",
+      "tool": "detect_defects",
+      "args": {
+        "sensitivity": 1.0
+      },
+      "why": "aligned -> production defect check",
+      "result": {
+        "threshold": 30.0,
+        "peak_residual": 25.0,
+        "regions": [],
+        "count": 0,
+        "total_area": 0
+      },
+      "plan_ms": 0.0,
+      "tool_ms": 5.1
+    },
+    {
+      "step": 5,
+      "planner": "rules",
+      "tool": "inspect_closeup",
+      "args": {
+        "bbox": []
+      },
+      "why": "no defect but peak residual 25.0 >= half threshold 30.0 -> take a closer look",
+      "result": {
+        "bbox": [
+          152,
+          355,
+          48,
+          48
+        ],
+        "threshold": 15.0,
+        "peak_residual": 25.0,
+        "regions": [],
+        "count": 0,
+        "total_area": 0
+      },
+      "plan_ms": 0.0,
+      "tool_ms": 5.2
+    },
+    {
+      "step": 6,
+      "planner": "rules",
+      "tool": "pass_part",
+      "args": {
+        "rationale": "close-up found nothing"
+      },
+      "why": "close-up clean",
+      "result": {
+        "ok": true
+      },
+      "plan_ms": 0.0,
+      "tool_ms": 0.0
+    }
+  ]
+}

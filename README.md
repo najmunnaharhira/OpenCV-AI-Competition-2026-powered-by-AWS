@@ -7,6 +7,8 @@ quarantine. Every OpenCV measurement and the decision it caused is recorded in a
 
 Entry for the OpenCV AI Competition 2026 (Agentic Vision path, with an optional COOL on Graviton track).
 
+![Architecture](docs/diagrams/architecture.png)
+
 ## Repository layout
 
 | Path | What it is |
@@ -19,7 +21,11 @@ Entry for the OpenCV AI Competition 2026 (Agentic Vision path, with an optional 
 | `eval/run_eval.py` | Agent vs. static one-shot pipeline; accuracy, false accept/reject, escalations, latency |
 | `bench/bench_ops.py` | Per-op latency of the OpenCV workload (stock wheel vs. COOL; arm64 vs. x86) |
 | `deploy/` | Dockerfile (Lambda arm64) and SAM template (S3, DynamoDB, SNS, Lambda, Bedrock access) |
-| `docs/` | Plan, architecture diagrams, report outline, video script |
+| `docs/REPORT.md` / `.pdf` | Technical report |
+| `docs/diagrams/` | Architecture and agent workflow diagrams (PNG + SVG) |
+| `docs/evidence/` | Agent traces showing OpenCV output driving decisions, guardrail, fallback, failure case |
+| `docs/REQUIREMENTS.md` | Checklist of every submission requirement and where it is met |
+| `docs/` (other) | Plan, COOL procedure, video script, mermaid diagrams |
 
 ## Quick start (local, no AWS needed)
 
@@ -27,6 +33,7 @@ Entry for the OpenCV AI Competition 2026 (Agentic Vision path, with an optional 
 python3.12 -m venv .venv && . .venv/bin/activate
 pip install -r requirements-dev.txt
 pytest                                   # 12 tests
+python -m eval.export_evidence           # regenerate docs/evidence/
 python -m eval.run_eval --n 200 --seed 11
 uvicorn inspectagent.api:app --reload    # open http://127.0.0.1:8000
 ```
@@ -62,4 +69,4 @@ to measure the arm64 vs. x86 difference.
 | mean latency (x86 dev box) | 86 ms | 128 ms |
 
 Known failure: a faint spot on a part first captured badly underexposed can slip through
-(2 of 100 defective parts). See `docs/REPORT_OUTLINE.md` for limitations.
+(2 of 100 defective parts). See `docs/REPORT.md` for limitations.

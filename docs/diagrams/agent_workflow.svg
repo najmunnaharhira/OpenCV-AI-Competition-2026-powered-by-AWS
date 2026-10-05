@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720" font-family="DejaVu Sans, Arial, sans-serif">
+  <defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#333"/></marker></defs>
+  <rect width="1200" height="720" fill="#fff"/>
+  <text x="600" y="34" text-anchor="middle" font-size="22" font-weight="bold">Agent workflow: perception → decision → action</text>
+  <!-- lane labels -->
+  <rect x="20" y="60" width="1160" height="190" rx="10" fill="#ecf8ef" stroke="#2d8a4a"/>
+  <text x="34" y="84" font-size="15" font-weight="bold" fill="#2d8a4a">PERCEPTION (OpenCV 5)</text>
+  <rect x="20" y="265" width="1160" height="190" rx="10" fill="#f3eefe" stroke="#7a4cc9"/>
+  
+  <rect x="20" y="470" width="1160" height="230" rx="10" fill="#fff8ef" stroke="#e08a00"/>
+  <text x="34" y="494" font-size="15" font-weight="bold" fill="#b36b00">ACTION</text>
+
+  <!-- perception boxes -->
+  <g font-size="13" text-anchor="middle">
+    <rect x="50" y="110" width="200" height="110" rx="8" fill="#fff" stroke="#2d8a4a"/>
+    <text x="150" y="138" font-weight="bold">Quality gate</text><text x="150" y="160">Laplacian variance</text><text x="150" y="178">mean intensity</text><text x="150" y="196">saturated fraction</text>
+    <rect x="330" y="110" width="200" height="110" rx="8" fill="#fff" stroke="#2d8a4a"/>
+    <text x="430" y="138" font-weight="bold">Registration</text><text x="430" y="160">ORB + RANSAC</text><text x="430" y="178">ECC sub-pixel</text><text x="430" y="196">validity mask</text>
+    <rect x="610" y="110" width="200" height="110" rx="8" fill="#fff" stroke="#2d8a4a"/>
+    <text x="710" y="138" font-weight="bold">Defect detection</text><text x="710" y="160">tolerant residual</text><text x="710" y="178">morphology + CC</text><text x="710" y="196">peak residual</text>
+    <rect x="890" y="110" width="250" height="110" rx="8" fill="#fff" stroke="#2d8a4a"/>
+    <text x="1015" y="138" font-weight="bold">Close-up re-inspection</text><text x="1015" y="160">zoom on strongest residual</text><text x="1015" y="178">sensitivity 2.0</text><text x="1015" y="196">image sent to planner</text>
+  </g>
+  <!-- decisions -->
+  <g font-size="12.5" text-anchor="middle">
+    <rect x="50" y="315" width="200" height="120" rx="8" fill="#fff" stroke="#7a4cc9"/>
+    <text x="150" y="340" font-weight="bold">Image usable?</text><text x="150" y="362">fix exposure first,</text><text x="150" y="380">then glare, then focus;</text><text x="150" y="398">never retry a failed fix</text>
+    <rect x="330" y="315" width="200" height="120" rx="8" fill="#fff" stroke="#7a4cc9"/>
+    <text x="430" y="340" font-weight="bold">Aligned?</text><text x="430" y="362">enough inliers</text><text x="430" y="380">else escalate</text>
+    <rect x="610" y="315" width="200" height="120" rx="8" fill="#fff" stroke="#7a4cc9"/>
+    <text x="710" y="340" font-weight="bold">Evidence clear?</text><text x="710" y="362">no regions and peak</text><text x="710" y="380">≥ threshold/2</text><text x="710" y="398">→ look closer</text>
+    <rect x="890" y="315" width="250" height="120" rx="8" fill="#fff" stroke="#7a4cc9"/>
+    <text x="1015" y="340" font-weight="bold">Severity?</text><text x="1015" y="362">minor: scratch, spot</text><text x="1015" y="380">critical: missing feature,</text><text x="1015" y="398">stain, area &gt; 1500 px</text>
+  </g>
+  <!-- actions -->
+  <g font-size="13" text-anchor="middle">
+    <rect x="50" y="520" width="200" height="80" rx="8" fill="#fff" stroke="#e08a00"/>
+    <text x="150" y="550" font-weight="bold">capture_image</text><text x="150" y="572">new camera settings</text>
+    <rect x="330" y="590" width="200" height="80" rx="8" fill="#fff" stroke="#e08a00"/>
+    <text x="430" y="620" font-weight="bold">request_human_approval</text><text x="430" y="642">manual_inspection</text>
+    <rect x="610" y="520" width="200" height="80" rx="8" fill="#fff" stroke="#1e7a3c"/>
+    <text x="710" y="548" font-weight="bold">pass_part</text><text x="710" y="568">only after a check</text><text x="710" y="586">on a good image</text>
+    <rect x="860" y="520" width="140" height="80" rx="8" fill="#fff" stroke="#b3261e"/>
+    <text x="930" y="550" font-weight="bold">reject_part</text><text x="930" y="572">minor only</text>
+    <rect x="1010" y="520" width="160" height="80" rx="8" fill="#fff" stroke="#b36b00"/>
+    <text x="1090" y="545" font-weight="bold">request_human</text><text x="1090" y="563" font-weight="bold">_approval</text><text x="1090" y="583">quarantine_lot</text>
+    <text x="1090" y="625" font-size="12">→ DynamoDB + SNS,</text><text x="1090" y="642" font-size="12">human approves</text><text x="1090" y="659" font-size="12">or declines</text>
+  </g>
+  <!-- arrows -->
+  <g stroke="#333" stroke-width="2" fill="none" marker-end="url(#a)">
+    <line x1="150" y1="220" x2="150" y2="313"/>
+    <line x1="150" y1="435" x2="150" y2="518"/>
+    <path d="M60,560 C 0,560 0,165 48,165"/>
+    <line x1="250" y1="375" x2="328" y2="375"/>
+    <line x1="430" y1="220" x2="430" y2="313"/>
+    <line x1="430" y1="435" x2="430" y2="588"/>
+    <line x1="530" y1="375" x2="608" y2="375"/>
+    <line x1="710" y1="220" x2="710" y2="313"/>
+    <line x1="710" y1="435" x2="710" y2="518"/>
+    <path d="M810,350 C 850,350 850,260 1000,222"/>
+    <line x1="1015" y1="220" x2="1015" y2="313"/>
+    <line x1="960" y1="435" x2="935" y2="518"/>
+    <line x1="1070" y1="435" x2="1085" y2="518"/>
+    <path d="M250,420 C 290,470 300,600 328,620"/>
+  </g>
+  <g font-size="11" fill="#333">
+    <text x="158" y="480">bad image</text><text x="438" y="520">fails</text><text x="718" y="480">clean</text>
+    <text x="10" y="350" transform="rotate(-90 10 350)">recapture loop</text>
+    <text x="868" y="350">ambiguous</text><text x="255" y="505">budget spent</text>
+  </g>
+  <rect x="28" y="272" width="600" height="24" fill="#f3eefe"/><text x="34" y="289" font-size="15" font-weight="bold" fill="#7a4cc9">DECISION (planner: rules or Claude on Bedrock, checked by guardrails)</text>
+  <text x="600" y="712" text-anchor="middle" font-size="12" fill="#555">Every step is logged with its OpenCV measurements and the reason for the next call (trace in S3 + CloudWatch).</text>
+</svg>

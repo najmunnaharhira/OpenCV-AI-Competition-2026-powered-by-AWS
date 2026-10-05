@@ -1,0 +1,138 @@
+{
+  "part_id": "DEMO-CRIT",
+  "ground_truth": [
+    {
+      "kind": "missing_hole",
+      "hole": 1
+    }
+  ],
+  "outcome": {
+    "decision": "human_review",
+    "status": "pending",
+    "proposed_action": "quarantine_lot",
+    "rationale": "critical defect ['stain_or_missing_feature'], area 2129px"
+  },
+  "trace": [
+    {
+      "step": 1,
+      "planner": "rules",
+      "tool": "capture_image",
+      "args": {
+        "refocus": false,
+        "exposure": 1.0,
+        "polarizer": false
+      },
+      "why": "start with default camera settings",
+      "result": {
+        "settings": {
+          "refocus": false,
+          "exposure": 1.0,
+          "polarizer": false
+        },
+        "quality": {
+          "sharpness": 97.6,
+          "mean_intensity": 38.6,
+          "glare_fraction": 0.0,
+          "issues": [
+            "blurry",
+            "underexposed"
+          ],
+          "ok": false
+        },
+        "captures_left": 3
+      },
+      "plan_ms": 0.0,
+      "tool_ms": 34.6
+    },
+    {
+      "step": 2,
+      "planner": "rules",
+      "tool": "capture_image",
+      "args": {
+        "refocus": false,
+        "exposure": 3.316,
+        "polarizer": false
+      },
+      "why": "underexposed: mean intensity 38.6 -> scale exposure",
+      "result": {
+        "settings": {
+          "refocus": false,
+          "exposure": 3.316,
+          "polarizer": false
+        },
+        "quality": {
+          "sharpness": 244.9,
+          "mean_intensity": 129.0,
+          "glare_fraction": 0.0,
+          "issues": [],
+          "ok": true
+        },
+        "captures_left": 2
+      },
+      "plan_ms": 0.0,
+      "tool_ms": 38.1
+    },
+    {
+      "step": 3,
+      "planner": "rules",
+      "tool": "align_to_reference",
+      "args": {},
+      "why": "image quality ok -> register to reference",
+      "result": {
+        "ok": true,
+        "inliers": 384,
+        "ecc": 0.9846,
+        "rotation_deg": 4.0,
+        "coverage": 0.942
+      },
+      "plan_ms": 0.0,
+      "tool_ms": 83.1
+    },
+    {
+      "step": 4,
+      "planner": "rules",
+      "tool": "detect_defects",
+      "args": {
+        "sensitivity": 1.0
+      },
+      "why": "aligned -> production defect check",
+      "result": {
+        "threshold": 30.0,
+        "peak_residual": 111.0,
+        "regions": [
+          {
+            "bbox": [
+              474,
+              94,
+              53,
+              53
+            ],
+            "area": 2129,
+            "contrast": 78.6,
+            "kind": "stain_or_missing_feature"
+          }
+        ],
+        "count": 1,
+        "total_area": 2129
+      },
+      "plan_ms": 0.0,
+      "tool_ms": 7.5
+    },
+    {
+      "step": 5,
+      "planner": "rules",
+      "tool": "request_human_approval",
+      "args": {
+        "proposed_action": "quarantine_lot",
+        "rationale": "critical defect ['stain_or_missing_feature'], area 2129px"
+      },
+      "why": "critical -> line action needs human approval",
+      "result": {
+        "ok": true,
+        "status": "pending"
+      },
+      "plan_ms": 0.1,
+      "tool_ms": 0.0
+    }
+  ]
+}

@@ -15,19 +15,7 @@ Deadline: **Oct 26 2026, 11:59 pm PT** (Oct 27, 12:59 pm GMT+6). Today: Oct 5.
 
 ## Requirement checklist
 
-| Requirement | Where it is covered | Status |
-|---|---|---|
-| OpenCV 5 for substantive analysis | `inspectagent/vision.py`, pinned `opencv-python-headless==5.0.0.93` | done |
-| Meaningful AWS component | Lambda arm64, S3, DynamoDB, SNS, Bedrock (`deploy/template.yaml`) | template written, not deployed |
-| Technical report | `docs/REPORT_OUTLINE.md` | outline |
-| Judge-accessible repo | needs a GitHub repo | waiting on repo |
-| Pinned deps + build/deploy/test instructions | `requirements*.txt`, `README.md` | done |
-| Architecture diagram | `docs/architecture.md` (mermaid) | done; export to PNG for report |
-| Working web endpoint | Lambda Function URL from SAM deploy | waiting on AWS account |
-| Video of 5 min or less | `docs/VIDEO_SCRIPT.md` | script |
-| Evaluation incl. failure cases | `eval/run_eval.py`, results JSON | synthetic done; real data to add |
-| Agentic: workflow diagram, trace, task success, failure handling, human control | `docs/architecture.md`, trace in UI/S3, eval metrics, guardrails | done for rules; run Claude planner on AWS |
-| COOL: version, instance config, reproducible baseline, evidence | `bench/bench_ops.py` | needs Graviton EC2 + COOL subscription |
+See [REQUIREMENTS.md](REQUIREMENTS.md) for every requirement, where it is met, and what is still open.
 
 ## Timeline
 
@@ -43,6 +31,5 @@ Deadline: **Oct 26 2026, 11:59 pm PT** (Oct 27, 12:59 pm GMT+6). Today: Oct 5.
 
 ## Open questions for you
 
-- GitHub repo to use (or should one be created)?
 - AWS account available? Region preference? Did you receive the compute grant?
 - Team name and members for the report and video.

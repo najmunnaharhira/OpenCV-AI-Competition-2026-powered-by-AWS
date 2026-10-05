@@ -6,6 +6,7 @@ AWS:     Lambda (arm64 / Graviton) container behind a Function URL, via Mangum.
 from __future__ import annotations
 
 import base64
+import logging
 import os
 
 from fastapi import FastAPI, HTTPException
@@ -17,6 +18,7 @@ from . import store
 from .agent import ClaudePlanner, RulePlanner, run
 from .camera import SimCamera, make_dataset
 
+logging.getLogger("inspectagent").setLevel(os.environ.get("LOG_LEVEL", "INFO"))
 app = FastAPI(title="InspectAgent", version="0.1.0")
 CAMERA = SimCamera()
 PARTS = {p.part_id: p for p in make_dataset(40, seed=int(os.environ.get("DEMO_SEED", "11")))}

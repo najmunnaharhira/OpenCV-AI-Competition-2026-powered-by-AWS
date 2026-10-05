@@ -1,5 +1,7 @@
 # Architecture
 
+Rendered diagrams: [architecture.png](diagrams/architecture.png), [agent_workflow.png](diagrams/agent_workflow.png). The mermaid versions below render on GitHub.
+
 ## System (OpenCV 5 + AWS)
 
 ```mermaid

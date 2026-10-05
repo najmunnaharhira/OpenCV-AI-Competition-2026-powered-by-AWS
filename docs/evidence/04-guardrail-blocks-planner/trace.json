@@ -1,0 +1,121 @@
+{
+  "part_id": "DEMO-GUARD",
+  "ground_truth": [
+    {
+      "kind": "missing_hole",
+      "hole": 4
+    }
+  ],
+  "outcome": {
+    "decision": "human_review",
+    "status": "pending",
+    "proposed_action": "quarantine_lot",
+    "rationale": "critical defect ['stain_or_missing_feature'], area 2129px"
+  },
+  "trace": [
+    {
+      "step": 1,
+      "planner": "overconfident",
+      "tool": "capture_image",
+      "args": {
+        "refocus": false,
+        "exposure": 1.0,
+        "polarizer": false
+      },
+      "why": "start with default camera settings",
+      "result": {
+        "settings": {
+          "refocus": false,
+          "exposure": 1.0,
+          "polarizer": false
+        },
+        "quality": {
+          "sharpness": 461.9,
+          "mean_intensity": 129.7,
+          "glare_fraction": 0.0,
+          "issues": [],
+          "ok": true
+        },
+        "captures_left": 3
+      },
+      "plan_ms": 0.0,
+      "tool_ms": 33.2
+    },
+    {
+      "step": 2,
+      "planner": "overconfident",
+      "tool": "align_to_reference",
+      "args": {},
+      "why": "image quality ok -> register to reference",
+      "result": {
+        "ok": true,
+        "inliers": 474,
+        "ecc": 0.986,
+        "rotation_deg": -0.0,
+        "coverage": 1.0
+      },
+      "plan_ms": 0.0,
+      "tool_ms": 46.2
+    },
+    {
+      "step": 3,
+      "planner": "overconfident",
+      "tool": "detect_defects",
+      "args": {
+        "sensitivity": 1.0
+      },
+      "why": "aligned -> production defect check",
+      "result": {
+        "threshold": 30.0,
+        "peak_residual": 111.0,
+        "regions": [
+          {
+            "bbox": [
+              294,
+              214,
+              53,
+              53
+            ],
+            "area": 2129,
+            "contrast": 78.5,
+            "kind": "stain_or_missing_feature"
+          }
+        ],
+        "count": 1,
+        "total_area": 2129
+      },
+      "plan_ms": 0.0,
+      "tool_ms": 4.1
+    },
+    {
+      "step": 4,
+      "planner": "overconfident",
+      "tool": "reject_part",
+      "args": {
+        "rationale": "just scrap it"
+      },
+      "why": "planner skips the human",
+      "result": {
+        "error": "guardrail: critical defect; request_human_approval(quarantine_lot) is required"
+      },
+      "plan_ms": 0.0,
+      "tool_ms": 0.0
+    },
+    {
+      "step": 5,
+      "planner": "overconfident",
+      "tool": "request_human_approval",
+      "args": {
+        "proposed_action": "quarantine_lot",
+        "rationale": "critical defect ['stain_or_missing_feature'], area 2129px"
+      },
+      "why": "critical -> line action needs human approval",
+      "result": {
+        "ok": true,
+        "status": "pending"
+      },
+      "plan_ms": 0.0,
+      "tool_ms": 0.0
+    }
+  ]
+}
