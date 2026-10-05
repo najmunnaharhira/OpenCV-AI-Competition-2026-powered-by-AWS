@@ -1,0 +1,9 @@
+# Runtime (pinned). OpenCV 5 is the core vision dependency.
+opencv-python-headless==5.0.0.93
+numpy==2.4.6
+boto3==1.43.108
+fastapi==0.142.2
+uvicorn==0.54.0
+python-multipart==0.0.32
+mangum==0.22.0
+anthropic[bedrock]==1.11.0

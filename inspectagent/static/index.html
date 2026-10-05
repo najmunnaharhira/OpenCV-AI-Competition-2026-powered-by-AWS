@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>InspectAgent</title>
+<style>
+  :root { --bg:#f7f7f5; --fg:#1d1d1b; --muted:#6b6b66; --card:#fff; --line:#e3e3de; --accent:#2457c5; --bad:#b3261e; --ok:#1e7a3c; --warn:#a15c00; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#151514; --fg:#ecece8; --muted:#a0a09a; --card:#1f1f1d; --line:#33332f; --accent:#7aa2ff; --bad:#ff8a80; --ok:#7bd88f; --warn:#ffb74d; } }
+  * { box-sizing:border-box } body { margin:0; font:15px/1.5 system-ui, sans-serif; background:var(--bg); color:var(--fg) }
+  main { max-width:1100px; margin:0 auto; padding:20px 16px }
+  h1 { font-size:22px; margin:0 0 4px } p.sub { color:var(--muted); margin:0 0 16px }
+  .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:16px }
+  select, button { font:inherit; padding:6px 10px; border:1px solid var(--line); border-radius:6px; background:var(--card); color:var(--fg) }
+  button.primary { background:var(--accent); color:#fff; border-color:var(--accent) }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:16px }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:12px; min-width:0 }
+  img { max-width:100%; border-radius:4px; display:block; margin-bottom:6px }
+  ol { padding-left:20px; margin:0 } li { margin-bottom:8px } code { font-size:12px; word-break:break-word; color:var(--muted) }
+  .pass{color:var(--ok)} .reject{color:var(--bad)} .human_review{color:var(--warn)}
+</style>
+</head>
+<body>
+<main>
+  <h1>InspectAgent</h1>
+  <p class="sub">OpenCV 5 measurements decide the next camera setting, close-up, rejection or human escalation.</p>
+  <div class="row">
+    <select id="part"></select>
+    <select id="planner"><option value="rules">Rule planner</option><option value="claude">Claude on Bedrock</option></select>
+    <button class="primary" id="go">Inspect</button>
+  </div>
+  <div class="grid">
+    <div class="card"><h3>Decision</h3><div id="outcome">Pick a part and press Inspect.</div><div id="approve"></div></div>
+    <div class="card"><h3>Agent trace</h3><ol id="trace"></ol></div>
+    <div class="card"><h3>Evidence</h3><div id="ev"></div></div>
+  </div>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+fetch('scenarios').then(r => r.json()).then(xs => {
+  $('part').innerHTML = xs.map(x => `<option value="${x.part_id}">${x.part_id} · capture: ${x.nuisance} · truth: ${x.ground_truth.join(',')}</option>`).join('');
+});
+$('go').onclick = async () => {
+  $('outcome').textContent = 'Running…'; $('trace').innerHTML = ''; $('ev').innerHTML = ''; $('approve').innerHTML = '';
+  const r = await fetch(`inspect/${$('part').value}?planner=${$('planner').value}`, {method:'POST'});
+  const d = await r.json();
+  const o = d.outcome;
+  $('outcome').innerHTML = `<b class="${o.decision}">${o.decision.replace('_',' ')}</b> ${o.proposed_action ? '('+o.proposed_action+')' : ''}<br>${o.rationale || ''}<br><code>planner: ${d.planner}</code>`;
+  $('trace').innerHTML = d.trace.map(t => t.tool
+    ? `<li><b>${t.tool}</b> ${JSON.stringify(t.args)}<br><i>${t.why}</i><br><code>${JSON.stringify(t.result).slice(0,300)}</code></li>`
+    : `<li><b>${t.event}</b> <code>${t.error}</code></li>`).join('');
+  $('ev').innerHTML = Object.entries(d.evidence).map(([k,v]) => `<div><code>${k}</code><img src="data:image/jpeg;base64,${v}" alt="${k}"></div>`).join('');
+  if (o.decision === 'human_review') {
+    $('approve').innerHTML = `<p>Waiting for a human:</p><button data-a="1">Approve</button> <button data-a="0">Decline</button>`;
+    $('approve').querySelectorAll('button').forEach(b => b.onclick = async () => {
+      const res = await fetch(`approvals/${d.session_id}`, {method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({approved: b.dataset.a === '1'})});
+      const j = await res.json(); $('approve').innerHTML = `<p>Recorded: <b>${j.status}</b> by ${j.reviewer}</p>`;
+    });
+  }
+};
+</script>
+</body>
+</html>

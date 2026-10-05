@@ -1,0 +1,82 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: InspectAgent - agentic visual inspection with OpenCV 5 on AWS Graviton
+
+Parameters:
+  Architecture:
+    Type: String
+    Default: arm64
+    AllowedValues: [arm64, x86_64]
+    Description: arm64 = Graviton (default); x86_64 for the baseline comparison
+  BedrockModelId:
+    Type: String
+    Default: anthropic.claude-opus-5-5
+  ApproverEmail:
+    Type: String
+    Default: ""
+    Description: optional email subscribed to approval notifications
+
+Conditions:
+  HasEmail: !Not [!Equals [!Ref ApproverEmail, ""]]
+
+Resources:
+  EvidenceBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      LifecycleConfiguration:
+        Rules: [{Id: expire, Status: Enabled, ExpirationInDays: 60}]
+
+  ApprovalsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions: [{AttributeName: session_id, AttributeType: S}]
+      KeySchema: [{AttributeName: session_id, KeyType: HASH}]
+
+  ApprovalsTopic:
+    Type: AWS::SNS::Topic
+
+  ApproverSubscription:
+    Type: AWS::SNS::Subscription
+    Condition: HasEmail
+    Properties: {TopicArn: !Ref ApprovalsTopic, Protocol: email, Endpoint: !Ref ApproverEmail}
+
+  InspectFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      PackageType: Image
+      Architectures: [!Ref Architecture]
+      MemorySize: 2048
+      Timeout: 120
+      Tracing: Active
+      Environment:
+        Variables:
+          TRACE_BUCKET: !Ref EvidenceBucket
+          APPROVALS_TABLE: !Ref ApprovalsTable
+          APPROVALS_TOPIC: !Ref ApprovalsTopic
+          BEDROCK_MODEL_ID: !Ref BedrockModelId
+      FunctionUrlConfig:
+        AuthType: NONE   # public demo URL for judges; switch to AWS_IAM after judging
+      Policies:
+        - S3CrudPolicy: {BucketName: !Ref EvidenceBucket}
+        - DynamoDBCrudPolicy: {TableName: !Ref ApprovalsTable}
+        - SNSPublishMessagePolicy: {TopicName: !GetAtt ApprovalsTopic.TopicName}
+        - Statement:
+            - Effect: Allow
+              Action: ["bedrock:*"]   # TODO tighten to the exact inference actions once verified
+              Resource: "*"
+    Metadata:
+      DockerTag: latest
+      DockerContext: ..
+      Dockerfile: deploy/Dockerfile
+
+Outputs:
+  DemoUrl:
+    Value: !GetAtt InspectFunctionUrl.FunctionUrl
+  EvidenceBucket:
+    Value: !Ref EvidenceBucket
