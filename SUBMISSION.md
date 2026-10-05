@@ -83,7 +83,7 @@ Under glare the baseline was right 50% of the time and the agent 100%. Under blu
 ## Challenges I ran into
 
 - **False defects along part edges.** A full homography extrapolated badly at the plate edges and produced fake "scratches". I switched to a 4-DoF similarity fit with ECC refinement, a validity mask for out-of-frame pixels and a min/max-envelope residual. That brought false rejects to zero.
-- **Dark images looked blurry.** Underexposure lowers the Laplacian variance, so the agent kept refocusing an image that only needed more exposure. The agent now fixes exposure first, then glare, then focus, and escalate instead of retrying a remedy that already failed.
+- **Dark images looked blurry.** Underexposure lowers the Laplacian variance, so the agent kept refocusing an image that only needed more exposure. The agent now fixes exposure first, then glare, then focus, and escalates instead of retrying a remedy that already failed.
 - **Faint defects.** Low-contrast spots fell just below the production threshold. Lowering the threshold everywhere would add false alarms, so I made the agent take a targeted close-up only when the residual is near the threshold.
 - **Keeping an LLM planner safe.** I put the guardrails in the executor, not in the prompt, so they hold whichever planner is driving.
 
@@ -96,7 +96,7 @@ The biggest gains did not come from a better detector. They came from letting th
 - The headline numbers come from a synthetic cell. Real parts have texture, variation and lighting that make the problem harder. Real-image evaluation is the next step.
 - Golden-reference comparison needs a reference image per part type and a fairly fixed camera setup.
 - The defect-type classifier is a shape heuristic.
-- One known failure: a faint spot on a part first captured heavily underexposed can still be missed (2 of 100 defective parts).
+- Known failures: 2 of 100 defective parts were missed because a very faint spot stayed below even the close-up threshold, and 4 stains were labelled as minor spots, so they were rejected instead of escalated.
 - Line-level actions always need human approval. Every decision is logged with its evidence, failures default to escalation rather than a silent pass, and the images contain no personal data.
 
 ## What's next

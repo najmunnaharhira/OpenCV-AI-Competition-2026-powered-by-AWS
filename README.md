@@ -68,5 +68,5 @@ to measure the arm64 vs. x86 difference.
 | mean captures per part | 1 | 1.8 |
 | mean latency (x86 dev box) | 86 ms | 128 ms |
 
-Known failure: a faint spot on a part first captured badly underexposed can slip through
+Known failure: a very faint spot can stay below even the close-up threshold and slip through
 (2 of 100 defective parts). See `docs/REPORT.md` for limitations.
