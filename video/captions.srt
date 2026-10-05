@@ -1,0 +1,243 @@
+1
+00:00:00,400 --> 00:00:09,296
+Hi! This is InspectAgent, my solo entry for the OpenCV AI Competition 2026, powered by AWS.
+
+2
+00:00:09,646 --> 00:00:16,052
+It is an agentic visual inspection system. OpenCV 5 looks at every part, and what it sees
+
+3
+00:00:16,052 --> 00:00:18,499
+decides what the system does next.
+
+4
+00:00:19,849 --> 00:00:26,317
+Most automated inspection is one-shot. Take one photo, run one fixed pipeline, and output pass
+
+5
+00:00:26,317 --> 00:00:26,868
+or fail.
+
+6
+00:00:27,218 --> 00:00:33,211
+But on a real production line, the photo itself is often the problem: blur, poor exposure,
+
+7
+00:00:33,211 --> 00:00:34,876
+glare, or a rotated part.
+
+8
+00:00:35,226 --> 00:00:41,599
+In my tests, a one-shot OpenCV pipeline was right only half the time when the image was blurry
+
+9
+00:00:41,599 --> 00:00:42,480
+or had glare.
+
+10
+00:00:43,830 --> 00:00:45,963
+A human inspector behaves differently.
+
+11
+00:00:46,313 --> 00:00:51,592
+When the view is bad, they fix the light and look again. When something looks odd, they lean in
+
+12
+00:00:51,592 --> 00:00:55,593
+for a closer look. And before stopping the line, they call a supervisor.
+
+13
+00:00:55,943 --> 00:00:58,333
+InspectAgent does the same three things.
+
+14
+00:00:59,683 --> 00:01:05,059
+Here is the architecture. A judge or operator opens a Lambda function URL.
+
+15
+00:01:05,409 --> 00:01:13,561
+The Lambda runs as an arm64 container on AWS Graviton, with FastAPI, the agent executor, and
+
+16
+00:01:13,561 --> 00:01:15,244
+the OpenCV 5 tools.
+
+17
+00:01:15,594 --> 00:01:18,452
+Amazon Bedrock hosts Claude as an optional planner.
+
+18
+00:01:18,802 --> 00:01:26,029
+Traces and evidence images go to S3, approval requests go to DynamoDB, and SNS emails the
+
+19
+00:01:26,029 --> 00:01:26,760
+approver.
+
+20
+00:01:27,110 --> 00:01:32,934
+CloudWatch and X-Ray provide observability, and everything is deployed with one SAM template.
+
+21
+00:01:34,284 --> 00:01:37,505
+The agent runs a perception, decision, and action loop.
+
+22
+00:01:37,855 --> 00:01:44,756
+Perception is pure OpenCV 5: a quality gate using the variance of the Laplacian, exposure and
+
+23
+00:01:44,756 --> 00:01:51,805
+glare. Registration with ORB, RANSAC and ECC. A misalignment-tolerant residual against a golden
+
+24
+00:01:51,805 --> 00:01:54,773
+reference. And a close-up re-inspection.
+
+25
+00:01:55,123 --> 00:02:00,205
+The planner picks the next tool, and guardrails in the executor make sure no part passes
+
+26
+00:02:00,205 --> 00:02:04,189
+without a real check, and no critical action happens without a human.
+
+27
+00:02:05,539 --> 00:02:08,547
+Let's see it work. This part was captured out of focus.
+
+28
+00:02:08,897 --> 00:02:14,986
+The quality gate measures a sharpness of 84, below the threshold of 120, so the agent
+
+29
+00:02:14,986 --> 00:02:16,705
+recaptures with refocus.
+
+30
+00:02:17,055 --> 00:02:24,177
+Sharpness jumps to about 260. Now it aligns the part, runs defect detection, finds nothing, and
+
+31
+00:02:24,177 --> 00:02:24,927
+passes it.
+
+32
+00:02:26,277 --> 00:02:29,413
+This one is harder: glare, and a very faint defect.
+
+33
+00:02:29,763 --> 00:02:36,184
+OpenCV finds three and a half percent saturated pixels, so the agent enables the polarizer.
+
+34
+00:02:36,534 --> 00:02:41,694
+At the production threshold, no defect is found. But the peak residual is close to the
+
+35
+00:02:41,694 --> 00:02:42,294
+threshold.
+
+36
+00:02:42,644 --> 00:02:48,370
+So instead of passing, the agent takes a close-up at double sensitivity, finds the spot, and
+
+37
+00:02:48,370 --> 00:02:49,428
+rejects the part.
+
+38
+00:02:50,778 --> 00:02:53,893
+Finally, a blurry capture of a part with a missing hole.
+
+39
+00:02:54,243 --> 00:02:57,571
+After refocusing, detection finds a critical defect.
+
+40
+00:02:57,921 --> 00:03:04,587
+Quarantining a production lot is a big decision, so the agent does not act alone. It requests
+
+41
+00:03:04,587 --> 00:03:10,465
+human approval. On AWS, the request is stored in DynamoDB and emailed through SNS.
+
+42
+00:03:10,815 --> 00:03:15,316
+The reviewer approves it, and the decision is recorded with the reviewer and the time.
+
+43
+00:03:16,666 --> 00:03:23,150
+I evaluated InspectAgent on 200 reproducible parts with ground-truth defects and capture
+
+44
+00:03:23,150 --> 00:03:23,813
+problems.
+
+45
+00:03:24,163 --> 00:03:32,066
+Compared with the same OpenCV detector run only once, pass or fail accuracy rose from 72 to 99
+
+46
+00:03:32,066 --> 00:03:32,739
+percent.
+
+47
+00:03:33,089 --> 00:03:39,057
+Defective parts slipping through dropped from 16 to 2 percent, and good parts wrongly rejected
+
+48
+00:03:39,057 --> 00:03:41,089
+dropped from 40 percent to zero.
+
+49
+00:03:41,439 --> 00:03:43,487
+The biggest gains are on blur and glare.
+
+50
+00:03:44,837 --> 00:03:47,674
+Failure handling and human control are built in.
+
+51
+00:03:48,024 --> 00:03:54,140
+If a planner, even an LLM, tries to skip the human on a critical defect, the executor blocks
+
+52
+00:03:54,140 --> 00:03:54,339
+it.
+
+53
+00:03:54,689 --> 00:03:59,126
+If Bedrock is unavailable, the loop falls back to the rule planner and logs it.
+
+54
+00:03:59,476 --> 00:04:04,724
+And every step is logged with its OpenCV measurements, so each decision can be audited.
+
+55
+00:04:06,074 --> 00:04:11,908
+There are limits. These results come from a synthetic inspection cell. Real parts are harder,
+
+56
+00:04:11,908 --> 00:04:14,543
+and real-image evaluation is my next step.
+
+57
+00:04:14,893 --> 00:04:19,309
+Two faint spots were still missed, and four stains were labeled as minor spots.
+
+58
+00:04:19,659 --> 00:04:23,990
+The golden-reference method also needs one reference image per part type.
+
+59
+00:04:25,340 --> 00:04:30,956
+InspectAgent shows that the biggest gain does not come from a better detector, but from letting
+
+60
+00:04:30,956 --> 00:04:34,385
+the system notice a bad observation and take a better one.
+
+61
+00:04:34,735 --> 00:04:40,303
+The code, the technical report, and the evaluation are on GitHub. Thank you for watching!

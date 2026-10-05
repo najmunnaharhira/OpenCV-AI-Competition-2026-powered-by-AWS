@@ -1,11 +1,51 @@
-# Video script (max 5:00)
+# Video script (4:41, narrated)
 
-| Time | Shot | Say |
-|---|---|---|
-| 0:00-0:20 | Team on camera | Who we are, the problem: one bad photo means a wrong pass or reject. |
-| 0:20-0:50 | Architecture diagram | OpenCV 5 in a Graviton Lambda, Claude on Bedrock plans, S3/DynamoDB/SNS. |
-| 0:50-2:00 | Live demo URL: blurry part | Trace shows Laplacian 84 < 120, agent refocuses, aligns, detects, passes. |
-| 2:00-2:45 | Demo: faint spot | No defect at production threshold, residual near threshold, close-up finds it, reject. |
-| 2:45-3:30 | Demo: missing hole | Critical defect, auto-reject blocked by guardrail, human approval request, approve in UI, email arrives. |
-| 3:30-4:20 | Results | Agent vs baseline table, per-nuisance chart, failure case, (COOL numbers). |
-| 4:20-5:00 | Limits and next steps | Real data, more part types, responsible-use controls. |
+Solo entry. Female English narration generated with Kokoro TTS (`af_heart`). Pipeline in `video/`.
+
+## 0:00-0:19 · title (slide)
+
+Hi! This is InspectAgent, my solo entry for the OpenCV AI Competition 2026, powered by AWS. It is an agentic visual inspection system. OpenCV 5 looks at every part, and what it sees decides what the system does next.
+
+## 0:19-0:43 · problem (slide)
+
+Most automated inspection is one-shot. Take one photo, run one fixed pipeline, and output pass or fail. But on a real production line, the photo itself is often the problem: blur, poor exposure, glare, or a rotated part. In my tests, a one-shot OpenCV pipeline was right only half the time when the image was blurry or had glare.
+
+## 0:43-0:59 · idea (slide)
+
+A human inspector behaves differently. When the view is bad, they fix the light and look again. When something looks odd, they lean in for a closer look. And before stopping the line, they call a supervisor. InspectAgent does the same three things.
+
+## 0:59-1:33 · arch (slide)
+
+Here is the architecture. A judge or operator opens a Lambda function URL. The Lambda runs as an arm64 container on AWS Graviton, with FastAPI, the agent executor, and the OpenCV 5 tools. Amazon Bedrock hosts Claude as an optional planner. Traces and evidence images go to S3, approval requests go to DynamoDB, and SNS emails the approver. CloudWatch and X-Ray provide observability, and everything is deployed with one SAM template.
+
+## 1:33-2:05 · workflow (slide)
+
+The agent runs a perception, decision, and action loop. Perception is pure OpenCV 5: a quality gate using the variance of the Laplacian, exposure and glare. Registration with ORB, RANSAC and ECC. A misalignment-tolerant residual against a golden reference. And a close-up re-inspection. The planner picks the next tool, and guardrails in the executor make sure no part passes without a real check, and no critical action happens without a human.
+
+## 2:05-2:25 · demo blur (demo)
+
+Let's see it work. This part was captured out of focus. The quality gate measures a sharpness of 84, below the threshold of 120, so the agent recaptures with refocus. Sharpness jumps to about 260. Now it aligns the part, runs defect detection, finds nothing, and passes it.
+
+## 2:25-2:50 · demo faint (demo)
+
+This one is harder: glare, and a very faint defect. OpenCV finds three and a half percent saturated pixels, so the agent enables the polarizer. At the production threshold, no defect is found. But the peak residual is close to the threshold. So instead of passing, the agent takes a close-up at double sensitivity, finds the spot, and rejects the part.
+
+## 2:50-3:16 · demo critical (demo)
+
+Finally, a blurry capture of a part with a missing hole. After refocusing, detection finds a critical defect. Quarantining a production lot is a big decision, so the agent does not act alone. It requests human approval. On AWS, the request is stored in DynamoDB and emailed through SNS. The reviewer approves it, and the decision is recorded with the reviewer and the time.
+
+## 3:16-3:44 · results (slide)
+
+I evaluated InspectAgent on 200 reproducible parts with ground-truth defects and capture problems. Compared with the same OpenCV detector run only once, pass or fail accuracy rose from 72 to 99 percent. Defective parts slipping through dropped from 16 to 2 percent, and good parts wrongly rejected dropped from 40 percent to zero. The biggest gains are on blur and glare.
+
+## 3:44-4:05 · safety (slide)
+
+Failure handling and human control are built in. If a planner, even an LLM, tries to skip the human on a critical defect, the executor blocks it. If Bedrock is unavailable, the loop falls back to the rule planner and logs it. And every step is logged with its OpenCV measurements, so each decision can be audited.
+
+## 4:05-4:24 · limits (slide)
+
+There are limits. These results come from a synthetic inspection cell. Real parts are harder, and real-image evaluation is my next step. Two faint spots were still missed, and four stains were labeled as minor spots. The golden-reference method also needs one reference image per part type.
+
+## 4:24-4:41 · close (slide)
+
+InspectAgent shows that the biggest gain does not come from a better detector, but from letting the system notice a bad observation and take a better one. The code, the technical report, and the evaluation are on GitHub. Thank you for watching!

@@ -8,7 +8,7 @@
 | Build, deploy and test instructions | `README.md`, `TESTING.md`, `TESTING.pdf` | Done |
 | Architecture diagram (OpenCV 5, AWS, agent components) | `docs/diagrams/architecture.png` (+ `.svg`) | Done |
 | Working web endpoint or live demo | Lambda Function URL from `deploy/template.yaml` | **Needs AWS deploy** |
-| Video of 5 minutes or less (team, app working, architecture, results) | script in `docs/VIDEO_SCRIPT.md` | **Needs recording** |
+| Video of 5 minutes or less (team, app working, architecture, results) | 4:41 narrated draft built by `video/`; script in `docs/VIDEO_SCRIPT.md` | **Upload to YouTube (unlisted)** |
 | Evaluation evidence including failure cases | `eval/results/*.json`, report section 7, `docs/evidence/06-failure-case` | Done (synthetic); real images to add |
 
 ## Agentic Vision award

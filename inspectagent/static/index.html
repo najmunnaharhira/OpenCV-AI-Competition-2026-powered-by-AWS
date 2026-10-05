@@ -17,7 +17,7 @@
   .card { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:12px; min-width:0 }
   img { max-width:100%; border-radius:4px; display:block; margin-bottom:6px }
   ol { padding-left:20px; margin:0 } li { margin-bottom:8px } code { font-size:12px; word-break:break-word; color:var(--muted) }
-  .pass{color:var(--ok)} .reject{color:var(--bad)} .human_review{color:var(--warn)}
+  .why{color:var(--muted);font-style:italic} .m{font-size:13px} .big{font-size:20px;text-transform:uppercase} .pass{color:var(--ok)} .reject{color:var(--bad)} .human_review{color:var(--warn)}
 </style>
 </head>
 <body>
@@ -40,18 +40,41 @@ const $ = id => document.getElementById(id);
 fetch('scenarios').then(r => r.json()).then(xs => {
   $('part').innerHTML = xs.map(x => `<option value="${x.part_id}">${x.part_id} · capture: ${x.nuisance} · truth: ${x.ground_truth.join(',')}</option>`).join('');
 });
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const STEP_MS = Number(new URLSearchParams(location.search).get('step_ms') ?? 700);
+function metric(r) {
+  if (!r) return '';
+  if (r.error) return `<span class="reject">${r.error}</span>`;
+  if (r.quality) { const q = r.quality; return `sharpness ${q.sharpness} · mean ${q.mean_intensity} · glare ${(q.glare_fraction*100).toFixed(1)}% · issues: <b>${q.issues.length ? q.issues.join(', ') : 'none'}</b>`; }
+  if ('inliers' in r) return `inliers ${r.inliers} · ECC ${r.ecc} · rotation ${r.rotation_deg}°`;
+  if (r.regions) return `threshold ${r.threshold} · peak residual ${r.peak_residual} · <b>${r.count} region(s)</b> ${r.regions.map(x => x.kind).join(', ')}`;
+  return JSON.stringify(r);
+}
+function addImg(name, b64) {
+  if (!b64 || document.getElementById('img-' + name)) return;
+  $('ev').insertAdjacentHTML('beforeend', `<div id="img-${name}"><code>${name}</code><img src="data:image/jpeg;base64,${b64}" alt="${name}"></div>`);
+}
 $('go').onclick = async () => {
   $('outcome').textContent = 'Running…'; $('trace').innerHTML = ''; $('ev').innerHTML = ''; $('approve').innerHTML = '';
   const r = await fetch(`inspect/${$('part').value}?planner=${$('planner').value}`, {method:'POST'});
   const d = await r.json();
   const o = d.outcome;
-  $('outcome').innerHTML = `<b class="${o.decision}">${o.decision.replace('_',' ')}</b> ${o.proposed_action ? '('+o.proposed_action+')' : ''}<br>${o.rationale || ''}<br><code>planner: ${d.planner}</code>`;
-  $('trace').innerHTML = d.trace.map(t => t.tool
-    ? `<li><b>${t.tool}</b> ${JSON.stringify(t.args)}<br><i>${t.why}</i><br><code>${JSON.stringify(t.result).slice(0,300)}</code></li>`
-    : `<li><b>${t.event}</b> <code>${t.error}</code></li>`).join('');
-  $('ev').innerHTML = Object.entries(d.evidence).map(([k,v]) => `<div><code>${k}</code><img src="data:image/jpeg;base64,${v}" alt="${k}"></div>`).join('');
+  $('outcome').textContent = 'Agent working…';
+  let cap = 0;
+  for (const t of d.trace) {
+    if (t.tool) {
+      $('trace').insertAdjacentHTML('beforeend', `<li><b>${t.tool}</b> <code>${JSON.stringify(t.args)}</code><br><span class="why">why: ${t.why}</span><br><span class="m">${metric(t.result)}</span></li>`);
+      if (t.tool === 'capture_image' && !(t.result && t.result.error)) addImg(`capture_${++cap}.jpg`, d.evidence[`capture_${cap}.jpg`]);
+      if (t.tool === 'detect_defects') addImg('annotated.jpg', d.evidence['annotated.jpg']);
+      if (t.tool === 'inspect_closeup') addImg('closeup.jpg', d.evidence['closeup.jpg']);
+    } else {
+      $('trace').insertAdjacentHTML('beforeend', `<li><b>${t.event}</b> <code>${t.error}</code></li>`);
+    }
+    await sleep(STEP_MS);
+  }
+  $('outcome').innerHTML = `<b class="${o.decision} big">${o.decision.replace('_',' ')}</b> ${o.proposed_action ? '('+o.proposed_action+')' : ''}<br>${o.rationale || ''}<br><code>planner: ${d.planner}</code>`;
   if (o.decision === 'human_review') {
-    $('approve').innerHTML = `<p>Waiting for a human:</p><button data-a="1">Approve</button> <button data-a="0">Decline</button>`;
+    $('approve').innerHTML = `<p>Waiting for a human:</p><button id="approve-yes" data-a="1">Approve</button> <button id="approve-no" data-a="0">Decline</button>`;
     $('approve').querySelectorAll('button').forEach(b => b.onclick = async () => {
       const res = await fetch(`approvals/${d.session_id}`, {method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({approved: b.dataset.a === '1'})});
       const j = await res.json(); $('approve').innerHTML = `<p>Recorded: <b>${j.status}</b> by ${j.reviewer}</p>`;
